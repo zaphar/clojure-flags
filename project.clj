@@ -1,4 +1,5 @@
-(defproject clojure-flags "0.01.0"
+(defproject clojure-flags "0.01.0-SNAPSHOT"
+  :description "Commandline Flag parsing library for clojure"
   :dependencies [[org.clojure/clojure "1.2.0-master-SNAPSHOT"]
                  [org.clojure/clojure-contrib "1.2.0-SNAPSHOT"]]
   :dev-dependencies [
