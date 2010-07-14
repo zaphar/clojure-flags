@@ -6,6 +6,8 @@
 
 (def *flag-vals* (ref {}))
 
+(def *flag-defs* (ref {}))
+
 (def *unparsed-args* (ref []))
 
 (defn get-flags []
@@ -15,6 +17,9 @@
 (defn get-flag [name]
   "Get the value of a parsed flag."
   (get (get-flags) name))
+
+(defn flag-type? [t nm]
+  (= t (:type (get @*flag-defs* nm))))
 
 (defn get-unparsed []
   @*unparsed-args*)
@@ -35,14 +40,20 @@
   (re-find (re-pattern (str "^--((no)?(" nm "))+=?(.*)"))
            arg))
 
+(defn parse-flag-nm
+  [flag]
+  (re-find (re-pattern (str "^--((no)?(.+))+=?(.*)"))
+           flag))
+
 (defn defflag
-  ([type nm] (defflag type nm ""))
-  ([type nm doc]
+  ([t nm] (defflag t nm ""))
+  ([t nm doc]
      (assert (nil? (get @*flags* nm)))
-     (dosync (ref-set *flags*
+     (dosync (ref-set *flag-defs* (assoc @*flag-defs* nm {:type t :doc doc}))
+             (ref-set *flags*
               (assoc @*flags* nm
                 (fn [arg] (parse-typed-value-for-flag
-                           type (parse-flag-components nm arg))))))))
+                           t (parse-flag-components nm arg))))))))
 
 (defn- accumulate-parsed-val
   [arg acc parser]
@@ -68,10 +79,55 @@
                    (cond (vector? prev-val) (conj val prev-val)
                          :else (vec [val prev-val]))))))
 
+(defn- illegal-state [msg & args]
+  (java.lang.IllegalStateException. (apply format msg args)))
+
+(defn- has-eq [flag]
+  (some #(= %1 \=) flag))
+
+(defn flag? [flag]
+  (= (take 2 flag) '(\- \-)))
+
+(defn has-no? [flag]
+  (= (take 2 flag) '(\n \o)))
+
+(defn bool-flag? [flag]
+  (let [name (get (parse-flag-nm flag) 3)]
+    (flag-type? Boolean name)))
+
+(defn test-flag-pair
+  [flag1 flag2]
+  (if (flag? flag1)
+    (if (has-eq flag1) nil
+      ; no equal sign in flag1
+      (if (not (bool-flag? flag1))
+        ; flag1 is not boolean
+        (if (not (flag? flag2))
+          ; flag2 is not a flag so it's our value
+          (str flag1 "=" flag2)
+          ; flag2 is our flag so flag1 has no value
+          (throw (illegal-state "flag %s has no value" flag1)))
+        ; flag1 is boolean without an equal sign so its all good
+        nil))
+    ; flag1 is not a flag so we have an unknown flag parse error
+    (throw (illegal-state "encountered unknown flag %s" flag1))))
+
+(defn- preprocess-flags
+  [acc flags]
+  (let [f1 (first flags)
+        f2 (second flags)
+        nxt (drop 2 flags)]
+    (cond (and f1 f2)
+          (let [fjoined? (test-flag-pair f1 f2)]
+            (if fjoined? (recur (conj acc fjoined?) nxt)
+                (recur (conj acc f1) (cons f2 nxt))))
+          :else (conj acc f1))))
+
 (defn parse [args]
   (let [parted (partition-by #(= "--" %1) args)
-        to-parse (first parted)
+        to-parse (filter #(not (nil? %1)) (preprocess-flags [] (first parted)))
         no-parse (vec (drop 1 (apply concat (rest parted))))]
+    (prn to-parse)
     (dosync (ref-set *flag-vals*
                      (reduce flags-reducer
                              {} (map parse-flag-to-vec to-parse)))
