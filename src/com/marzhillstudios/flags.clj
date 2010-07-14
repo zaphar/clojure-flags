@@ -1,7 +1,6 @@
 (ns com.marzhillstudios.flags
   (:import [java.lang Boolean Integer String]))
 
-; TODO(jwall): unit tests
 (def *flags* (ref {}))
 
 (def *flag-vals* (ref {}))
