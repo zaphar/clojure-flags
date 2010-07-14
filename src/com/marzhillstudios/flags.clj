@@ -75,8 +75,8 @@
             (assoc acc key val)
           :else
             (assoc acc key
-                   (cond (vector? prev-val) (conj val prev-val)
-                         :else (vec [val prev-val]))))))
+                   (cond (vector? prev-val) (concat prev-val [val])
+                         :else (vec [prev-val val]))))))
 
 (defn- illegal-state [msg & args]
   (java.lang.IllegalStateException. (apply format msg args)))
