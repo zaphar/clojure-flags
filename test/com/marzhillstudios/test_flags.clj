@@ -1,4 +1,4 @@
-(ns test-flags
+(ns com.marzhillstudios.test-flags
   (:use clojure.test
         com.marzhillstudios.flags))
 
