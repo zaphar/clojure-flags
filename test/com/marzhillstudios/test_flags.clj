@@ -4,9 +4,9 @@
 
 (defn set-up []
   (dosync (ref-set com.marzhillstudios.flags/*flags* {}))
-  (defflag Boolean "foo")
-  (defflag String "baz")
-  (defflag Integer "bar"))
+  (defflag :bool "foo")
+  (defflag :string "baz")
+  (defflag :int "bar"))
 
 (deftest test-bool-flag?
   (set-up)
@@ -44,4 +44,11 @@
              true)
            (catch Exception e
              false)))
+  )
+
+(deftest test-get-flag-desc
+  (set-up)
+  (defflag :string "flag-with-doc" "this flag has a doc")
+  (is (= (get-flag-desc "flag-with-doc")
+         "--flag-with-doc\t:string\tthis flag has a doc"))
   )

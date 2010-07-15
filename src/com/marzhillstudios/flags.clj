@@ -1,5 +1,5 @@
 (ns com.marzhillstudios.flags
-  (:import [java.lang Boolean Integer String]))
+  (:require [clojure.contrib.string :as s]))
 
 (def *flags* (ref {}))
 
@@ -13,12 +13,22 @@
   "Get a map of all the flags parsed so far."
   @*flag-vals*)
 
+(defn get-flag-defs
+  [] @*flag-defs*)
+
+(defn get-flag-def
+  [nm] (get (get-flag-defs) nm))
+
+(defn get-flag-desc [nm] 
+  (let [flag-def (get-flag-def nm)]
+    (str "--" nm "\t" (:type flag-def) "\t" (:doc flag-def))))
+
 (defn get-flag [name]
   "Get the value of a parsed flag."
   (get (get-flags) name))
 
 (defn flag-type? [t nm]
-  (= t (:type (get @*flag-defs* nm))))
+  (= t (:type (get-flag-def nm))))
 
 (defn get-unparsed []
   @*unparsed-args*)
@@ -30,9 +40,9 @@
 (defn- parse-typed-value-for-flag
   [type matched]
   (cond (nil? matched) nil
-        (isa? type Integer) [(matched 3) (Integer/parseInt (last matched))]
-        (isa? type Boolean) [(matched 3) (parse-on-off (matched 1))]
-        (isa? type String) [(matched 3) (last matched)]))
+        (= type :int) [(matched 3) (Integer/parseInt (last matched))]
+        (= type :bool) [(matched 3) (parse-on-off (matched 1))]
+        (= type :string) [(matched 3) (last matched)]))
 
 (defn parse-flag-components
   [nm arg]
@@ -92,7 +102,7 @@
 
 (defn bool-flag? [flag]
   (let [name (get (parse-flag-nm flag) 3)]
-    (flag-type? Boolean name)))
+    (flag-type? :bool name)))
 
 (defn test-flag-pair
   [flag1 flag2]
@@ -121,6 +131,18 @@
             (if fjoined? (recur (conj acc fjoined?) nxt)
                 (recur (conj acc f1) (cons f2 nxt))))
           :else (conj acc f1))))
+
+(defn flags-help-string
+  "Builds a string with all the flags descriptions."
+  []
+  (format "Flag descriptions: \n%s"
+          (s/join "\n"
+                  (map get-flag-desc (keys (get-flag-defs))))))
+
+(defn print-help
+  ([] (prn (flags-help-string)))
+  ([msg] (prn (str msg "\n\n"))
+     (print-help)))
 
 (defn parse [args]
   (let [parted (partition-by #(= "--" %1) args)
