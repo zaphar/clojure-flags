@@ -57,12 +57,20 @@ $> path/to/app --path=/some/file/path --(no)do-this -- unparsed-arg
   (not (re-find (re-matcher #"^no" value))))
 
 ; TODO(jwall): pluggable flag type parsers
+(def *type-parsers* (ref {}))
+
+(defn defflag-type
+  [type f]
+  (dosync (ref-set *type-parsers* (assoc @*type-parsers* type f))))
+
+(defflag-type :int #(Integer/parseInt (last %1)))
+(defflag-type :bool #(parse-on-off (get %1 1)))
+(defflag-type :string #(last %1))
+
 (defn- parse-typed-value-for-flag
   [type matched]
   (cond (nil? matched) nil
-        (= type :int) [(matched 3) (Integer/parseInt (last matched))]
-        (= type :bool) [(matched 3) (parse-on-off (matched 1))]
-        (= type :string) [(matched 3) (last matched)]))
+        :else [(matched 3) ((get @*type-parsers*  type) matched)]))
 
 (defn parse-flag-components
   [nm arg]
