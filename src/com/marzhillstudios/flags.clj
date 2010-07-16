@@ -1,4 +1,23 @@
 (ns com.marzhillstudios.flags
+  "Command Line flags parsing library.
+
+You can define flags anywhere in your code base. The flags are typed and can have an explanatory doc string. A parser method is provided that will parse the flags passed on the command line.
+
+Example code:
+(defflag :string \"path\" \"A filesystem path\")
+(defflag :bool \"do-this\" \"A boolean flag\")
+
+(parse args)
+
+(let [path (get-flag \"path\")
+      do-this? (get-flag \"do-this\")]
+  ; code goes here
+  )
+
+Example command line:
+$> path/to/app --path=/some/file/path --(no)do-this -- unparsed-arg
+"
+
   (:require [clojure.contrib.string :as s]))
 
 (def *flags* (ref {}))
@@ -37,6 +56,7 @@
   [value]
   (not (re-find (re-matcher #"^no" value))))
 
+; TODO(jwall): pluggable flag type parsers
 (defn- parse-typed-value-for-flag
   [type matched]
   (cond (nil? matched) nil
@@ -49,10 +69,11 @@
   (re-find (re-pattern (str "^--((no)?(" nm "))+=?(.*)"))
            arg))
 
+(def flag-nm-re #"^--((no)?(.+))+=?(.*)")
+
 (defn parse-flag-nm
   [flag]
-  (re-find (re-pattern (str "^--((no)?(.+))+=?(.*)"))
-           flag))
+  (get (re-find flag-nm-re flag) 3))
 
 (defn defflag
   ([t nm] (defflag t nm ""))
@@ -101,7 +122,7 @@
   (= (take 2 flag) '(\n \o)))
 
 (defn bool-flag? [flag]
-  (let [name (get (parse-flag-nm flag) 3)]
+  (let [name (parse-flag-nm flag)]
     (flag-type? :bool name)))
 
 (defn test-flag-pair
@@ -144,7 +165,9 @@
   ([msg] (prn (str msg "\n\n"))
      (print-help)))
 
-(defn parse [args]
+(defn parse
+  "Parse command line flags looking for defined flags"
+  [args]
   (let [parted (partition-by #(= "--" %1) args)
         to-parse (filter #(not (nil? %1)) (preprocess-flags [] (first parted)))
         no-parse (vec (drop 1 (apply concat (rest parted))))]
