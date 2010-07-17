@@ -9,18 +9,18 @@ clojure-flags allows you to:
 2. Self Document flags
 3. Type checking flags.
 
-  (require '[com.marzhillstudios.flags :as flags])
+   (require '[com.marzhillstudios.flags :as flags])
   
-  (defflag :string "string-flag"
-           "Documentation about the flag")
-  (defflag :bool "bool-flag"
-           "Documentation about the bool flag")
+   (defflag :string "string-flag"
+            "Documentation about the flag")
+   (defflag :bool "bool-flag"
+            "Documentation about the bool flag")
   
-  (defn -main [& args]
-   (flags/parse args) ; parse the command line arguments
-   (do
-     (let [string-flag-val (get-flag "string-flag")] ; retrieve the flag value
-       (some-fun (flags/unparsed-args)))))
+   (defn -main [& args]
+    (flags/parse args) ; parse the command line arguments
+    (do
+      (let [string-flag-val (get-flag "string-flag")] ; retrieve the flag value
+        (some-fun (flags/unparsed-args)))))
 
 You can define your own flag type handlers using the defflag-type function:
 
