@@ -1,3 +1,8 @@
+; This software Copyright Jeremy Wall <jeremy@marzhillstudios.com>
+; and is available under the terms of the Artistic License 2.0
+; A copy of this license should be included with the source but if
+; it is not you can view a copy of the license here:
+; http://www.opensource.org/licenses/artistic-license-2.0.php
 (ns com.marzhillstudios.flags
   "Command Line flags parsing library.
 
