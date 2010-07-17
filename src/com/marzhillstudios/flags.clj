@@ -1,4 +1,4 @@
-; This software Copyright Jeremy Wall <jeremy@marzhillstudios.com>
+; This software Copyright (C) 2010 Jeremy Wall <jeremy@marzhillstudios.com>
 ; and is available under the terms of the Artistic License 2.0
 ; A copy of this license should be included with the source but if
 ; it is not you can view a copy of the license here:
