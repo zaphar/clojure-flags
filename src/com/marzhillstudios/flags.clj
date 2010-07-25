@@ -174,6 +174,9 @@ $> path/to/app --path=/some/file/path --(no)do-this -- unparsed-arg
                   (map get-flag-desc (keys (get-flag-defs))))))
 
 (defn print-help
+  "Prints help for the flags defined in the application.
+
+msg: optional help message that will be printed before the flag help."
   ([] (prn (flags-help-string)))
   ([msg] (prn (str msg "\n\n"))
      (print-help)))
